@@ -1,13 +1,23 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:laafi/models/pharmacy.dart';
 import 'package:laafi/models/produit.dart';
 import 'package:laafi/utils/constants.dart';
 import 'package:logger/logger.dart';
 
-class ProduitController {
+class ProduitController with ChangeNotifier {
 
   final logger = Logger();
+  List<Produit> _produits = []; // Stocke la liste des produits
+  Map<String, int> quantites = {}; // Pour stocker les quantités
+
+  List<Produit> get produits => _produits; // Getter pour accéder aux produits
+
+  void setQuantites(Map<String, int> nouvellesQuantites) {
+    quantites = nouvellesQuantites;
+    notifyListeners(); // Notifier les widgets écoutant le controller
+  }
 
   Future<List<Produit>> fetchProduitsPageable() async {
 
@@ -22,6 +32,10 @@ class ProduitController {
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
         List<dynamic> produitsList = jsonResponse['content'];
+
+        _produits = produitsList.map((produit) => Produit.fromJson(produit)).toList();
+        notifyListeners();
+
         return produitsList.map((produit) => Produit.fromJson(produit)).toList();
       } else {
         throw Exception('Failed to load produits');
@@ -41,3 +55,4 @@ class ProduitController {
 
   }
 }
+

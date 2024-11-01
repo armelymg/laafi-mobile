@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:laafi/authentication/register.dart';
 import 'package:laafi/controllers/auth_controller.dart';
 import 'package:laafi/home.dart';
 import 'package:laafi/models/user.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -30,7 +32,8 @@ class _LoginPageState extends State<LoginPage> {
       );
       try {
         // Attendre la réponse de l'authentification
-        futureUtilisateur = await AuthController().login(telephone, password);
+        final authController = Provider.of<AuthController>(context, listen: false);
+        futureUtilisateur = await authController.login(telephone, password);
 
         // Incrémenter l'étape après une connexion réussie
         setState(() {
@@ -132,6 +135,30 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 75),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                    "Pas encore de compte? "
+                ),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RegisterPage()), // Remplace par ta page d'enregistrement
+                    );
+                  },
+                  child: Text(
+                    "Enregistrez vous!",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            )
           ],
         ),
       ),

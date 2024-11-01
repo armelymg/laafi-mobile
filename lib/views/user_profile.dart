@@ -2,34 +2,38 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:laafi/authentication/login.dart';
+import 'package:laafi/controllers/auth_controller.dart';
 import 'package:modern_form_line_awesome_icons/modern_form_line_awesome_icons.dart';
+import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    var isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    final authController = Provider.of<AuthController>(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Votre profil", style: Theme.of(context).textTheme.headlineMedium),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: Icon(isDark ? Icons.sunny : Icons.shield_moon),
-          )
-        ],
-      ),
       body: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
           decoration: BoxDecoration(
-            color: isDark ? Colors.black : Colors.white,
+            color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
           ),
           child: Column(
             children: [
-              /// -- IMAGE
+              SizedBox(height: 30),
+              Text(
+                  "Votre profil",
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 17),
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -57,8 +61,8 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              Text("John DOE", style: Theme.of(context).textTheme.headlineMedium),
-              Text("Livreur", style: Theme.of(context).textTheme.bodyMedium),
+              Text("${authController.user!.prenoms} ${authController.user!.nom}", style: Theme.of(context).textTheme.headlineMedium),
+              Text("${authController.user!.type}", style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 20),
 
               SizedBox(
@@ -72,9 +76,8 @@ class ProfileScreen extends StatelessWidget {
                   child: const Text("Modifier le profil", style: TextStyle(color: Colors.white)),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 15),
               const Divider(thickness: 2),
-              const SizedBox(height: 10),
               Container(
                 height: MediaQuery.of(context).size.height * 0.5, // Ajuste la hauteur selon tes besoins
                 child: ListView(
@@ -111,9 +114,37 @@ class ProfileScreen extends StatelessWidget {
                       leading: Icon(Icons.logout_rounded),
                       title: Text("Se déconnecter"),
                       onTap: () {
-                        // Implémenter l'action pour "Paramètres" ici
+                        // Afficher une boîte de dialogue de confirmation
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text("Confirmation"),
+                              content: Text("Êtes-vous sûr de vouloir vous déconnecter ?"),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text("Annuler"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text("Oui"),
+                                  onPressed: () {
+                                    // Appeler la méthode de déconnexion
+                                    authController.logout();
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(builder: (context) => LoginPage()),
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
                     ),
+
                   ],
                 ),
               ),

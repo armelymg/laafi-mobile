@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:laafi/controllers/auth_controller.dart';
+import 'package:laafi/controllers/produit_controller.dart';
 import 'package:laafi/splash_screen.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => AuthController()..loadUserFromPreferences(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ProduitController(),
+        ),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

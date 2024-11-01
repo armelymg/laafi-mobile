@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:laafi/controllers/produit_controller.dart';
 import 'package:laafi/models/produit.dart';
+import 'package:laafi/views/panier.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProduitListPage extends StatefulWidget {
@@ -64,6 +66,9 @@ class _ProduitListPageState extends State<ProduitListPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    final produitController = Provider.of<ProduitController>(context);
+
     return Scaffold(
       body: FutureBuilder<List<Produit>>(
         future: futureProduits,
@@ -115,7 +120,9 @@ class _ProduitListPageState extends State<ProduitListPage> {
                                   ElevatedButton(
                                     onPressed: () {
                                       // Logique pour vider le panier
-                                      print("Vider le panier");
+                                      setState(() {
+                                        quantites = {};
+                                      });
                                     },
                                     child: Text("Vider", style: TextStyle(color: Colors.white)),
                                     style: ButtonStyle(
@@ -126,7 +133,11 @@ class _ProduitListPageState extends State<ProduitListPage> {
                                   ElevatedButton(
                                     onPressed: () {
                                       // Logique pour naviguer vers le panier
-                                      print("Naviguer vers le panier");
+                                      Provider.of<ProduitController>(context, listen: false).setQuantites(quantites);
+
+                                      Navigator.of(context).pushReplacement(MaterialPageRoute(
+                                        builder: (context) => PanierScreen(),
+                                      ));
                                     },
                                     child: Text(
                                       "Voir le Panier",

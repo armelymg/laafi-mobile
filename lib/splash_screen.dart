@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:laafi/controllers/auth_controller.dart';
+import 'package:laafi/home.dart';
 import 'dart:async';
 
 import 'package:laafi/on_boarding.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -12,9 +15,16 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserAndNavigate();
+  }
+
+  Future<void> _loadUserAndNavigate() async {
+    final authController = Provider.of<AuthController>(context, listen: false);
+    await authController.loadUserFromPreferences();
+
     Timer(Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (context) => OnBoarding(),
+        builder: (context) => authController.user!=null ? HomePage() : OnBoarding(),
       ));
     });
   }

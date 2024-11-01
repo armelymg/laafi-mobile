@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:laafi/authentication/login.dart';
 import 'package:laafi/controllers/auth_controller.dart';
 import 'package:laafi/home.dart';
 import 'package:laafi/models/user.dart';
@@ -226,6 +227,31 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 70),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                    "Avez-vous déjà un compte? "
+                ),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()), // Remplace par ta page d'enregistrement
+                    );
+                  },
+                  child: Text(
+                    "Connectez vous!",
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            )
           ],
         ),
       ),

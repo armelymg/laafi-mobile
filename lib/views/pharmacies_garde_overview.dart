@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:laafi/controllers/pharmacy_controller.dart';
 import 'package:laafi/models/pharmacy.dart';
 import 'package:laafi/views/itineraire_maps.dart';
@@ -14,11 +17,35 @@ class PharmacyListPage extends StatefulWidget {
 class _PharmacyListPageState extends State<PharmacyListPage> {
 
   late Future<List<Pharmacy>> futurePharmacies;
+  double? userLatitude;
+  double? userLongitude;
 
   @override
   void initState() {
     super.initState();
+    _getUserLocation();
     futurePharmacies = PharmacyController().fetchPharmacies();
+  }
+
+  void _getUserLocation() async {
+    // Vérifier les permissions
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Gestion de l'absence de permissions
+        return;
+      }
+    }
+
+    // Récupérer la localisation
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      userLatitude = position.latitude;
+      userLongitude = position.longitude;
+      // Recharger la liste des pharmacies si nécessaire
+      futurePharmacies = PharmacyController().fetchPharmacies();
+    });
   }
 
   void _launchMapsUrl(double latitude, double longitude) async {
@@ -40,14 +67,30 @@ class _PharmacyListPageState extends State<PharmacyListPage> {
             return Center(child: Text('Erreur : ${snapshot.error}'));
           } else {
             final pharmacies = snapshot.data!;
+
+            // Trier les pharmacies par distance
+            List<Map<String, dynamic>> pharmaciesWithDistance = pharmacies.map((pharmacy) {
+              final lat = pharmacy.localisation['latitude'] ?? 0.0;
+              final lon = pharmacy.localisation['longitude'] ?? 0.0;
+              final distance = calculateDistance(userLatitude!, userLongitude!, lat, lon);
+              return {
+                'pharmacy': pharmacy,
+                'distance': distance,
+              };
+            }).toList();
+
+            // Tri par distance
+            pharmaciesWithDistance.sort((a, b) => a['distance'].compareTo(b['distance']));
+
+
             return ListView.builder(
                 padding: EdgeInsets.all(10.0),
                 itemCount: pharmacies.length,
                 itemBuilder: (context, index) {
-                  final pharmacy = pharmacies[index];
-                  final localisation = pharmacy.localisation;
-                  final latitude = localisation['latitude'] ?? 0.0;
-                  final longitude = localisation['longitude'] ?? 0.0;
+                  final pharmacyData = pharmaciesWithDistance[index];
+                  final pharmacy = pharmacyData['pharmacy'];
+                  final distance = pharmacyData['distance'];
+
 
                   return Card(
                     margin: EdgeInsets.all(8.0),
@@ -70,17 +113,13 @@ class _PharmacyListPageState extends State<PharmacyListPage> {
                         children: [
                           // Text(pharmacy.localisation),
                           Text(pharmacy.phone.toString()),
+                          Text('Distance : ${distance.toStringAsFixed(2)} km'),
                         ],
                       ),
                       onTap: () {
-                        _launchMapsUrl(latitude, longitude);
                         // Navigue vers la page d'itinéraire
-                        /*Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MapsItineraryPage(latitude: latitude, longitude: longitude),
-                          ),
-                        );*/
+                        _launchMapsUrl(pharmacy.localisation['latitude'], pharmacy.localisation['longitude']);
+                        //_launchMapsUrl(latitude, longitude);
                       },
                     ),
                   );
@@ -89,4 +128,19 @@ class _PharmacyListPageState extends State<PharmacyListPage> {
         },),
     );
   }
+
+  // Méthode pour calculer la distance
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    const R = 6371; // Rayon de la Terre en kilomètres
+    double dLat = (lat2 - lat1) * (pi / 180);
+    double dLon = (lon2 - lon1) * (pi / 180);
+
+    double a = sin(dLat / 2) * sin(dLat / 2) +
+        cos(lat1 * (pi / 180)) * cos(lat2 * (pi / 180)) *
+            sin(dLon / 2) * sin(dLon / 2);
+
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c; // Distance en kilomètres
+  }
+
 }
