@@ -3,8 +3,15 @@ import 'package:flutter/material.dart';
 
 class SearchSection extends StatelessWidget {
   final int index;
+  final TextEditingController searchController;
+  final ValueChanged<String> onChanged;
 
-  const SearchSection({super.key, required this.index});
+  const SearchSection({
+    Key? key,
+    required this.index,
+    required this.searchController,
+    required this.onChanged,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +22,8 @@ class SearchSection extends StatelessWidget {
       child: Stack(
         children: [
           TextField(
+            controller: searchController,
+            onChanged: onChanged,
             decoration: InputDecoration(
               fillColor: Colors.white,
               filled: true,
@@ -31,7 +40,7 @@ class SearchSection extends StatelessWidget {
               ),
               hintText: index==0 ? "Rechercher les pharmacies" : "Rechercher le prix d'un médicament",
               hintStyle: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 color: Colors.grey.withOpacity(0.7)
               )
             ),

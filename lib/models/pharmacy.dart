@@ -21,4 +21,14 @@ class Pharmacy {
       groupe: json['groupe'] as int,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'pharmacie': name,
+      'localisation': localisation,
+      'telephone': phone,
+      'groupe': groupe,
+    };
+  }
+
 }

@@ -9,6 +9,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 class PharmacyListPage extends StatefulWidget {
 
+  final TextEditingController searchController;
+
+  PharmacyListPage({Key? key, required this.searchController}) : super(key: key);
+
   @override
   _PharmacyListPageState createState() => _PharmacyListPageState();
 
@@ -20,11 +24,33 @@ class _PharmacyListPageState extends State<PharmacyListPage> {
   double? userLatitude;
   double? userLongitude;
 
+  List<Pharmacy> _allPharmacies = [];
+  List<Pharmacy> _filteredPharmacies = [];
+
   @override
   void initState() {
     super.initState();
     _getUserLocation();
     futurePharmacies = PharmacyController().fetchPharmacies();
+    widget.searchController.addListener(_filterPharmacies); // Écoute les changements de texte
+  }
+
+  void _filterPharmacies() {
+    final query = widget.searchController.text.toLowerCase();
+    if (_allPharmacies.isNotEmpty) {
+      setState(() {
+        _filteredPharmacies = _allPharmacies.where((pharmacy) {
+          return pharmacy.name.toLowerCase().contains(query) ||
+              pharmacy.phone.toString().contains(query);
+        }).toList();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.searchController.removeListener(_filterPharmacies); // Enlever l'écouteur
+    super.dispose();
   }
 
   void _getUserLocation() async {
@@ -66,10 +92,18 @@ class _PharmacyListPageState extends State<PharmacyListPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Erreur : ${snapshot.error}'));
           } else {
-            final pharmacies = snapshot.data!;
+
+            if (_allPharmacies.isEmpty && snapshot.connectionState == ConnectionState.done) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  _allPharmacies = snapshot.data ?? [];
+                  _filterPharmacies(); // Filtrez après avoir mis à jour _allPharmacies
+                });
+              });
+            }
 
             // Trier les pharmacies par distance
-            List<Map<String, dynamic>> pharmaciesWithDistance = pharmacies.map((pharmacy) {
+            List<Map<String, dynamic>> pharmaciesWithDistance = _filteredPharmacies.map((pharmacy) {
               final lat = pharmacy.localisation['latitude'] ?? 0.0;
               final lon = pharmacy.localisation['longitude'] ?? 0.0;
               final distance = calculateDistance(userLatitude!, userLongitude!, lat, lon);
@@ -85,12 +119,17 @@ class _PharmacyListPageState extends State<PharmacyListPage> {
 
             return ListView.builder(
                 padding: EdgeInsets.all(10.0),
-                itemCount: pharmacies.length,
+                itemCount: _filteredPharmacies.length ?? 0, // Gérer les listes nulles
                 itemBuilder: (context, index) {
+
+                  // Vérifiez si la liste est nulle ou si l'index est en dehors des limites
+                  if (pharmaciesWithDistance == null || index >= pharmaciesWithDistance.length) {
+                    return SizedBox.shrink();
+                  }
+
                   final pharmacyData = pharmaciesWithDistance[index];
                   final pharmacy = pharmacyData['pharmacy'];
                   final distance = pharmacyData['distance'];
-
 
                   return Card(
                     margin: EdgeInsets.all(8.0),
@@ -107,25 +146,78 @@ class _PharmacyListPageState extends State<PharmacyListPage> {
                           ),
                         ),
                       ),
-                      title: Text(pharmacy.name),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      title: Text(
+                          pharmacy.name,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                      subtitle: Row(
                         children: [
-                          // Text(pharmacy.localisation),
-                          Text(pharmacy.phone.toString()),
-                          Text('Distance : ${distance.toStringAsFixed(2)} km'),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(pharmacy.phone.toString()),
+                              ],
+                            ),
+                          ),
+                          distance < 100 ? Container(
+                              padding: EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                "${distance.toStringAsFixed(2)} km",
+                                style: TextStyle(color: Colors.white),
+                              )
+                          ) : Text(
+                              "Localisation indisponible",
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold
+                            ),
+                          ),
                         ],
                       ),
                       onTap: () {
-                        // Navigue vers la page d'itinéraire
-                        _launchMapsUrl(pharmacy.localisation['latitude'], pharmacy.localisation['longitude']);
-                        //_launchMapsUrl(latitude, longitude);
+
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text("Confirmation"),
+                              content: Text("Rechercher l'itinéraire de la pharmacie ${pharmacy.name} ?"),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: Text("Annuler"),
+                                  onPressed: () {
+                                    Navigator.of(context).pop(); // Fermer la boîte de dialogue
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text("Oui"),
+                                  onPressed: () {
+                                    // Navigue vers la page d'itinéraire
+                                    _launchMapsUrl(pharmacy.localisation['latitude'], pharmacy.localisation['longitude']);
+                                    //_launchMapsUrl(latitude, longitude);
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
                       },
                     ),
                   );
                 });
-          }
-        },),
+            }
+        },
+      ),
     );
   }
 

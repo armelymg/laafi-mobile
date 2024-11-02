@@ -12,7 +12,7 @@ void main() {
           create: (context) => AuthController()..loadUserFromPreferences(),
         ),
         ChangeNotifierProvider(
-          create: (context) => ProduitController(),
+          create: (context) => ProduitController()..fetchProduitsPageable(),
         ),
       ],
       child: MyApp(),

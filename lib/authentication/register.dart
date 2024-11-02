@@ -39,6 +39,12 @@ class _RegisterPageState extends State<RegisterPage> {
           _currentStep++;
         });
 
+        // Appel de la page d'accueil
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+
         // Si c'est la dernière étape, rediriger vers HomePage
         if (_currentStep == 1) {
           Fluttertoast.showToast(msg: 'Un code OTP vous été envoyé !');
@@ -61,28 +67,30 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('')),
-      body: Column(
-        children: [
-          Text(
-            "S'enregistrer",
-            style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Text(
+              "S'enregistrer",
+              style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold
+              ),
             ),
-          ),
-          Text(
-            "Renseigner vos informations ci-dessous",
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey
+            Text(
+              "Renseigner vos informations ci-dessous",
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey
+              ),
             ),
-          ),
-          SingleChildScrollView(
-            // child: _currentStep == 0 ? _registrationForm() : _otpForm(context),
-            child: _currentStep == 0 ? _registrationForm() : HomePage(),
-          ),
-        ],
+            SingleChildScrollView(
+              // child: _currentStep == 0 ? _registrationForm() : _otpForm(context),
+              child: _currentStep == 0 ? _registrationForm() : HomePage(),
+            ),
+          ],
+        ),
       )
     );
   }

@@ -7,6 +7,11 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProduitListPage extends StatefulWidget {
+
+  final TextEditingController searchController;
+
+  ProduitListPage({Key? key, required this.searchController}) : super(key: key);
+
   @override
   _ProduitListPageState createState() => _ProduitListPageState();
 }
@@ -16,10 +21,33 @@ class _ProduitListPageState extends State<ProduitListPage> {
   late Future<List<Produit>> futureProduits;
   Map<String, int> quantites = {}; // Map pour stocker les quantités sélectionnées
 
+  List<Produit> _allProduits = [];
+  List<Produit> _filteredProduits = [];
+
+
   @override
   void initState() {
     super.initState();
     futureProduits = ProduitController().fetchProduitsPageable();
+    widget.searchController.addListener(_filterProduits); // Écoute les changements de texte
+  }
+
+  void _filterProduits() {
+    final query = widget.searchController.text.toLowerCase();
+    if (_allProduits.isNotEmpty) {
+        setState(() {
+        _filteredProduits = _allProduits.where((produit) {
+          return produit.libelle.toLowerCase().contains(query) ||
+              produit.description.toString().contains(query);
+        }).toList();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.searchController.removeListener(_filterProduits); // Enlever l'écouteur
+    super.dispose();
   }
 
   void _incrementQuantite(String produitLibelle) {
@@ -78,8 +106,18 @@ class _ProduitListPageState extends State<ProduitListPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Erreur : ${snapshot.error}'));
           } else {
-            final produits = snapshot.data!;
-            final totalMontant = _calculerMontantTotal(produits); // Calculez le montant total ici
+
+            if (_allProduits.isEmpty && snapshot.connectionState == ConnectionState.done) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  _allProduits = snapshot.data ?? [];
+                  _filterProduits(); // Filtrez après avoir mis à jour _allProduits
+                });
+              });
+            }
+
+            final totalMontant = _calculerMontantTotal(_allProduits); // Calculez le montant total ici
+
             return Column(
               children: [
                 Container(
@@ -162,9 +200,9 @@ class _ProduitListPageState extends State<ProduitListPage> {
                 Expanded(
                     child: ListView.builder(
                       padding: EdgeInsets.all(10.0),
-                      itemCount: produits.length,
+                      itemCount: _filteredProduits.length,
                       itemBuilder: (context, index) {
-                        final produit = produits[index];
+                        final produit = _filteredProduits[index];
                         final quantite = quantites[produit.libelle] ?? 0;
 
                         return Card(

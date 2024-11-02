@@ -11,12 +11,12 @@ import 'package:laafi/models/commande.dart';
 import 'package:laafi/models/pharmacy.dart';
 import 'package:provider/provider.dart';
 
-class PanierScreen extends StatefulWidget {
+class CommandeScreen extends StatefulWidget {
   @override
-  _PanierScreenState createState() => _PanierScreenState();
+  _CommandeScreenState createState() => _CommandeScreenState();
 }
 
-class _PanierScreenState extends State<PanierScreen> {
+class _CommandeScreenState extends State<CommandeScreen> {
 
   Pharmacy? selectedPharmacy; // Variable pour la pharmacie sélectionnée
   late Future<List<Pharmacy>> futurePharmacies;
@@ -46,12 +46,12 @@ class _PanierScreenState extends State<PanierScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mon Panier'),
+        title: Text('#Commande'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pushReplacement(
-                context,
+              context,
               MaterialPageRoute(builder: (context) => HomePage()),
 
             );
@@ -170,7 +170,7 @@ class _PanierScreenState extends State<PanierScreen> {
             ),
 
             Text(
-              "Choisir la pharmacie"
+                "Choisir la pharmacie"
             ),
 
             FutureBuilder<List<Pharmacy>>(
@@ -225,7 +225,7 @@ class _PanierScreenState extends State<PanierScreen> {
                     MaterialPageRoute(builder: (context) => HomePage()),
                   );
 
-                    Fluttertoast.showToast(msg: 'Votre commande a été enregistré !');
+                  Fluttertoast.showToast(msg: 'Votre commande a été enregistré !');
                 } catch (e) {
                   // Gérer les erreurs d'authentification ici
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -236,9 +236,9 @@ class _PanierScreenState extends State<PanierScreen> {
 
               },
               child: Text(
-                  "Passer la Commande",
+                "Passer la Commande",
                 style: TextStyle(
-                  color: Colors.white
+                    color: Colors.white
                 ),
               ),
               style: ButtonStyle(

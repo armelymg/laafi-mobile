@@ -18,4 +18,14 @@ class Produit {
       prix: json['prix'] as double,
     );
   }
+
+  // Méthode pour convertir l'objet Produit en Map pour JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'libelle': libelle,
+      'description': description,
+      'prix': prix,
+    };
+  }
+
 }

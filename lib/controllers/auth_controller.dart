@@ -57,7 +57,13 @@ class AuthController with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        return Utilisateur.fromJson(jsonResponse);
+
+        // Save for preferences
+        _user = Utilisateur.fromJson(jsonResponse);
+        await _saveUserToPreferences();
+        notifyListeners();
+
+        return _user!;
       } else {
         throw Exception('Failed to register. Status code: ${response.statusCode}'+json.encode(utilisateur.toJson()));
       }

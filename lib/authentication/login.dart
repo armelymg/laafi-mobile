@@ -25,11 +25,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void _nextStep(String telephone, String password) async {
     if (_formKey.currentState!.validate()) {
-      // Appel de la méthode de connexion
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
+
       try {
         // Attendre la réponse de l'authentification
         final authController = Provider.of<AuthController>(context, listen: false);
