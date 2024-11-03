@@ -29,8 +29,13 @@ class _HistoryCommandeState extends State<HistoryCommande> {
   @override
   Widget build(BuildContext context) {
     final authController = Provider.of<AuthController>(context);
-    futureCommandes = CommandeController().fetchUserCommande(authController.user!.telephone);
-
+    if(authController.user!.pharmacie == null ) {
+      futureCommandes = CommandeController().fetchUserCommande(
+          authController.user!.telephone);
+    } else {
+      futureCommandes = CommandeController().fetchPharmacieCommande(
+          authController.user!.pharmacie!.name);
+    }
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -58,7 +63,14 @@ class _HistoryCommandeState extends State<HistoryCommande> {
 
                   return Container(
                     height: MediaQuery.of(context).size.height, // Définit une hauteur pour le ListView
-                    child: ListView.builder(
+                    child: _allCommandes == null || _allCommandes!.isEmpty
+                      ? Center(
+                      child: Text(
+                        "Vous n'avez pas de commandes pour l'instant",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    )
+                        : ListView.builder(
                       padding: EdgeInsets.all(10.0),
                       itemCount: _allCommandes?.length ?? 0,
                       itemBuilder: (context, index) {

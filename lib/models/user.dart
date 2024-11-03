@@ -1,4 +1,6 @@
 
+import 'package:laafi/models/pharmacy.dart';
+
 class Utilisateur {
 
   final String nom;
@@ -9,6 +11,7 @@ class Utilisateur {
   final String type;
   final bool isAvailable;
   final bool isEnabled;
+  final Pharmacy? pharmacie;
 
   Utilisateur({
     required this.nom,
@@ -19,6 +22,7 @@ class Utilisateur {
     required this.type,
     required this.isAvailable,
     required this.isEnabled,
+    required this.pharmacie,
   });
 
   factory Utilisateur.fromJson(Map<String, dynamic> json) {
@@ -31,6 +35,9 @@ class Utilisateur {
       type: json['type'] as String,
       isAvailable: json['available'] as bool,
       isEnabled: json['enabled'] as bool,
+      pharmacie: json['pharmacie'] != null
+          ? Pharmacy.fromJson(json['pharmacie'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -43,8 +50,9 @@ class Utilisateur {
       'email': email,
       'password': password,
       'type': type,
-      'isAvailable': isAvailable,
-      'isEnabled': isEnabled
+      'available': isAvailable,
+      'enabled': isEnabled,
+      'pharmacie': pharmacie
     };
   }
 }

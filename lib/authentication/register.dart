@@ -4,7 +4,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:laafi/authentication/login.dart';
 import 'package:laafi/controllers/auth_controller.dart';
+import 'package:laafi/controllers/pharmacy_controller.dart';
 import 'package:laafi/home.dart';
+import 'package:laafi/models/pharmacy.dart';
 import 'package:laafi/models/user.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -13,9 +15,13 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _otpController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   bool _isChecked = false;
+  bool _isDropdownOpen = false;
+  String? _errorMessage;
   late Utilisateur futureUtilisateur;
 
   String _name = '';
@@ -27,7 +33,36 @@ class _RegisterPageState extends State<RegisterPage> {
 
   int _currentStep = 0;
 
+  late Future<List<Pharmacy>> _pharmacies;
+  List<Pharmacy> _allPharmacies = [];
+  List<Pharmacy> _filteredPharmacies = [];
+  Pharmacy? _selectedPharmacy;
+
+  @override
+  void initState() {
+    super.initState();
+    _pharmacies = PharmacyController().fetchPharmacies();
+  }
+
+  void _filterPharmacies(String value) {
+    final query = value.toLowerCase();
+
+    if (query.isEmpty) {
+      setState(() {
+        _filteredPharmacies = _allPharmacies; // Récupérer toutes les pharmacies
+      });
+    } else {
+      setState(() {
+        _filteredPharmacies = _allPharmacies
+            .where((pharmacy) => pharmacy.name.toLowerCase().contains(query))
+            .toList(); // Filtrer les pharmacies selon la recherche
+      });
+    }
+  }
+
+
   Future<void> _nextStep(Utilisateur utilisateur) async {
+    _validateCheckbox();
     if (_formKey.currentState!.validate()) {
       // Appel de la méthode de connexion
       try {
@@ -175,10 +210,90 @@ class _RegisterPageState extends State<RegisterPage> {
               onChanged: (value) {
                 setState(() {
                   _accountType = value!;
+                  if (_accountType != 'Responsable Pharmacie') {
+                    _selectedPharmacy = null; // Réinitialiser la sélection si ce n'est pas un responsable
+                    _filteredPharmacies = _allPharmacies; // Réinitialiser la liste
+                  }
                 });
               },
               validator: (value) => value == null ? 'Sélectionnez un type d\'utilisateur' : null,
             ),
+
+            const SizedBox(height: 25),
+
+            if (_accountType == 'Responsable Pharmacie') ...[
+
+              FutureBuilder<List<Pharmacy>>(
+                future: _pharmacies,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (snapshot.hasData) {
+
+                    if (_allPharmacies.isEmpty && snapshot.connectionState == ConnectionState.done) {
+                      _allPharmacies = snapshot.data ?? [];
+                      _filteredPharmacies = _allPharmacies; // Assurez-vous que _filteredPharmacies est mise à jour
+                    }
+
+                    return SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              labelText: 'Veuillez indiquer votre pharmacie',
+                              prefixIcon: Icon(Icons.local_pharmacy_outlined),
+                            ),
+                            onChanged: _filterPharmacies,
+                            onTap: () {
+                              setState(() {
+                                _isDropdownOpen = true; // Ouvrir le dropdown lors du tap
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                          if (_isDropdownOpen) ...[
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4.0),
+                              ),
+                              child: ListView(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                children: _filteredPharmacies.map((pharmacy) {
+                                  return ListTile(
+                                    title: Text("Pharmacie ${pharmacy.name}"),
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedPharmacy = pharmacy;
+                                        _searchController.text = pharmacy.name; // Mettre à jour le champ de recherche
+                                        _isDropdownOpen = false; // Fermer le dropdown
+                                        //_filteredPharmacies = widget.pharmacies; // Réinitialiser la liste
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          if (_selectedPharmacy != null)
+                            Text("Pharmacie sélectionnée : ${_selectedPharmacy?.name}"),
+
+                        ],
+                      ),
+                    );
+                  } else {
+                    return Center(child: Text('Pas de données trouvées.'));
+                  }
+                },
+              ),
+
+
+            ],
 
             const SizedBox(height: 10),
             Row(
@@ -189,6 +304,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   onChanged: (bool? value) {
                     setState(() {
                       _isChecked = value ?? false;
+                      _errorMessage = null; // Réinitialiser le message d'erreur lors du changement
                     });
                   },
                 ),
@@ -216,7 +332,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     Utilisateur(
                         nom: _name, prenoms: _surname, telephone: _phone,
                         email: _email, password: _password, type: _accountType,
-                        isAvailable: false, isEnabled: false
+                        isAvailable: false, isEnabled: false, pharmacie: _selectedPharmacy
                     )
                 );
               },
@@ -351,4 +467,17 @@ class _RegisterPageState extends State<RegisterPage> {
         )
     );
   }
+
+  void _validateCheckbox() {
+    setState(() {
+      if (!_isChecked) {
+        _errorMessage = 'Vous devez accepter les conditions.';
+        Fluttertoast.showToast(msg: "Vous devez accepter les conditions.");
+
+      } else {
+        _errorMessage = null; // Réinitialiser le message d'erreur si validé
+      }
+    });
+  }
+
 }

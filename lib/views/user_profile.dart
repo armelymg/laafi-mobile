@@ -62,7 +62,14 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text("${authController.user!.prenoms} ${authController.user!.nom}", style: Theme.of(context).textTheme.headlineMedium),
-              Text("${authController.user!.type}", style: Theme.of(context).textTheme.bodyMedium),
+              if (authController.user?.type == "Responsable Pharmacie") ...[
+                Text(
+                  "Agent Pharmacie ${authController.user?.pharmacie?.name ?? 'Non spécifiée'}",
+                  style: Theme.of(context).textTheme.bodyMedium,
+                )
+              ] else ...[
+                Text("${authController.user!.type}", style: Theme.of(context).textTheme.bodyMedium),
+              ],
               const SizedBox(height: 20),
 
               SizedBox(

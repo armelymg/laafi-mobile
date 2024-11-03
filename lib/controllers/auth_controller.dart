@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:laafi/models/pharmacy.dart';
 import 'package:laafi/models/user.dart';
 import 'package:laafi/utils/constants.dart';
 import 'package:logger/logger.dart';
@@ -89,6 +90,12 @@ class AuthController with ChangeNotifier {
     prefs.setString('type', _user!.type);
     prefs.setBool('isAvailable', _user!.isAvailable);
     prefs.setBool('isEnabled', _user!.isEnabled);
+    final pharmacie = _user!.pharmacie;
+    if (pharmacie != null) {
+      prefs.setString('pharmacie', jsonEncode(pharmacie.toJson())); // Assurez-vous que toJson() existe
+    } else {
+      prefs.remove('pharmacie'); // Supprimez la clé si pharmacie est null
+    }
   }
 
   Future<void> _removeUserFromPreferences() async {
@@ -114,8 +121,16 @@ class AuthController with ChangeNotifier {
     final type = prefs.getString('type');
     final isAvailable = prefs.getBool('isAvailable');
     final isEnabled = prefs.getBool('isEnabled');
+    final pharmacieData = prefs.getString('pharmacie');
+
     // Vérifie si ces valeurs ne sont pas null et crée un Utilisateur
     if (nom != null && prenoms != null && telephone != null && email != null && password!=null && type !=null && isAvailable!=null && isEnabled!=null) {
+
+      Pharmacy? pharmacie;
+      if (pharmacieData != null) {
+        pharmacie = Pharmacy.fromJson(jsonDecode(pharmacieData)); // Adaptez selon votre méthode de désérialisation
+      }
+
       _user = Utilisateur(
         nom: nom,
         prenoms: prenoms,
@@ -124,7 +139,8 @@ class AuthController with ChangeNotifier {
         password: password,
         type: type,
         isAvailable: isAvailable,
-        isEnabled: isEnabled
+        isEnabled: isEnabled,
+        pharmacie: pharmacie
       );
       notifyListeners();
     }

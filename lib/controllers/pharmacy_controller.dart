@@ -21,6 +21,7 @@ class PharmacyController {
       }
     } catch (e) {
       throw Exception('Failed to load pharmacies: $e');
+
     }
 
   }

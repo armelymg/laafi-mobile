@@ -77,4 +77,32 @@ class CommandeController with ChangeNotifier {
 
   }
 
+
+  Future<List<Commande>> fetchPharmacieCommande(String nom) async {
+
+    try {
+      final response = await http.get(
+        Uri.parse('${Constants.urlFindPharmacieCommande}?nom=${nom}'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        List jsonResponse = json.decode(response.body);
+
+        _commandes = jsonResponse.map((commande) => Commande.fromJson(commande)).toList();
+        notifyListeners();
+
+        return jsonResponse.map((produit) => Commande.fromJson(produit)).toList();
+      } else {
+        throw Exception('Failed to load commandes');
+      }
+    } catch (e) {
+      throw Exception('Failed to load commandes: $e');
+    }
+
+
+  }
+
 }
